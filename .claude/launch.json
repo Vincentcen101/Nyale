@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "nyale-laravel",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["nyale-institute-website/artisan", "serve", "--port=8000"],
+      "port": 8000
+    }
+  ]
+}

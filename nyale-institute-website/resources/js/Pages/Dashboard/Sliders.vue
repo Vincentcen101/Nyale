@@ -1,0 +1,175 @@
+<script setup>
+import { ref } from 'vue';
+import { useForm, router } from '@inertiajs/vue3';
+import AppSidebarLayout from '@/Layouts/AppSidebarLayout.vue';
+import RichTextEditor from '@/Components/RichTextEditor.vue';
+import { confirmDelete } from '@/Composables/useConfirm';
+
+defineProps({
+    sliders: { type: Array, default: () => [] },
+});
+
+const showForm = ref(false);
+const editingId = ref(null);
+const currentImage = ref(null);
+
+const form = useForm({
+    title: '',
+    eyebrow: '',
+    description: '',
+    image: null,
+    button_label: '',
+    button_url: '',
+    order: 0,
+});
+
+const openCreate = () => {
+    editingId.value = null;
+    currentImage.value = null;
+    form.reset();
+    showForm.value = true;
+};
+
+const openEdit = (slide) => {
+    editingId.value = slide.id;
+    currentImage.value = slide.image;
+    form.title = slide.title;
+    form.eyebrow = slide.eyebrow ?? '';
+    form.description = slide.description ?? '';
+    form.image = null;
+    form.button_label = slide.button_label ?? '';
+    form.button_url = slide.button_url ?? '';
+    form.order = slide.order;
+    showForm.value = true;
+};
+
+const close = () => {
+    showForm.value = false;
+    form.reset();
+};
+
+const submit = () => {
+    if (editingId.value) {
+        form.transform((data) => ({ ...data, _method: 'put' })).post(`/dashboard/sliders/${editingId.value}`, {
+            preserveScroll: true,
+            onSuccess: close,
+        });
+    } else {
+        form.transform((data) => data).post('/dashboard/sliders', { preserveScroll: true, onSuccess: close });
+    }
+};
+
+const destroy = async (id) => {
+    if (await confirmDelete('Delete this slide?')) {
+        router.delete(`/dashboard/sliders/${id}`, { preserveScroll: true });
+    }
+};
+
+const toggleActive = (id) => {
+    router.patch(`/dashboard/sliders/${id}/toggle-active`, {}, { preserveScroll: true });
+};
+</script>
+
+<template>
+    <AppSidebarLayout title="Home Page Sliders">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <p class="text-sm text-nyale-navy/60 max-w-xl">
+                Only slides created here appear in the home page slider. News, blog and impact stories are never added automatically. Every slide shows "Learn More" and "Get Involved" buttons; the first button can be customised per slide.
+            </p>
+            <button @click="showForm ? close() : openCreate()"
+                class="rounded-full bg-nyale-blue px-5 py-2.5 text-sm font-bold text-white hover:bg-nyale-blue-dark">
+                {{ showForm ? 'Cancel' : '+ Add Slide' }}
+            </button>
+        </div>
+
+        <form v-if="showForm" @submit.prevent="submit" class="mb-8 rounded-2xl border border-nyale-blue/15 p-6 space-y-4">
+            <h3 class="font-bold text-nyale-navy">{{ editingId ? 'Edit Slide' : 'New Slide' }}</h3>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Title</label>
+                    <input v-model="form.title" type="text" required class="w-full rounded-xl border-nyale-blue/20" />
+                    <p v-if="form.errors.title" class="text-xs text-red-600 mt-1">{{ form.errors.title }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Small label above title (optional)</label>
+                    <input v-model="form.eyebrow" type="text" maxlength="100" placeholder="e.g. Litigation Outcome" class="w-full rounded-xl border-nyale-blue/20" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Description</label>
+                <RichTextEditor v-model="form.description" min-height="6rem" placeholder="Short text shown on the slide…" />
+                <p class="text-xs text-nyale-navy/40 mt-1">Use B and I to make text bold or italic. Keep it under 600 characters.</p>
+                <p v-if="form.errors.description" class="text-xs text-red-600 mt-1">{{ form.errors.description }}</p>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">First button label (default: Learn More)</label>
+                    <input v-model="form.button_label" type="text" maxlength="60" placeholder="Learn More" class="w-full rounded-xl border-nyale-blue/20" />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">First button link (default: /about)</label>
+                    <input v-model="form.button_url" type="text" placeholder="/about, /news/my-story or https://…" class="w-full rounded-xl border-nyale-blue/20" />
+                </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Image</label>
+                    <input @input="form.image = $event.target.files[0]" type="file" accept="image/*" class="w-full text-sm" />
+                    <p v-if="editingId && currentImage" class="text-xs text-nyale-navy/50 mt-1">Leave empty to keep the current image.</p>
+                    <p v-if="form.errors.image" class="text-xs text-red-600 mt-1">{{ form.errors.image }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Order (lower shows first)</label>
+                    <input v-model.number="form.order" type="number" class="w-full rounded-xl border-nyale-blue/20" />
+                </div>
+            </div>
+            <button type="submit" :disabled="form.processing" class="rounded-full bg-nyale-blue px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+                {{ editingId ? 'Update' : 'Create' }}
+            </button>
+        </form>
+
+        <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-nyale-blue-light text-nyale-navy/70">
+                    <tr>
+                        <th class="text-left px-5 py-3 font-semibold">Slide</th>
+                        <th class="text-left px-5 py-3 font-semibold">Order</th>
+                        <th class="text-left px-5 py-3 font-semibold">Status</th>
+                        <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-nyale-blue/10">
+                    <tr v-for="slide in sliders" :key="slide.id">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-3">
+                                <img v-if="slide.image" :src="`/storage/${slide.image}`" :alt="slide.title"
+                                    class="h-12 w-20 rounded-lg object-cover flex-shrink-0" />
+                                <div v-else class="h-12 w-20 rounded-lg bg-nyale-blue-light flex-shrink-0"></div>
+                                <div>
+                                    <p class="font-semibold text-nyale-navy">{{ slide.title }}</p>
+                                    <p v-if="slide.eyebrow" class="text-xs text-nyale-green font-semibold">{{ slide.eyebrow }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 text-nyale-navy/60">{{ slide.order }}</td>
+                        <td class="px-5 py-3">
+                            <button @click="toggleActive(slide.id)" class="rounded-full px-3 py-1 text-xs font-bold"
+                                :class="slide.is_active ? 'bg-nyale-green/15 text-nyale-green-dark' : 'bg-nyale-navy/10 text-nyale-navy/50'">
+                                {{ slide.is_active ? 'Live' : 'Hidden' }}
+                            </button>
+                        </td>
+                        <td class="px-5 py-3 text-right space-x-3">
+                            <button @click="openEdit(slide)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
+                            <button @click="destroy(slide.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                    <tr v-if="!sliders.length">
+                        <td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">
+                            No slides yet — the home page slider stays hidden until you add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </AppSidebarLayout>
+</template>
