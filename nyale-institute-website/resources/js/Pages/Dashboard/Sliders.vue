@@ -106,7 +106,7 @@ const toggleActive = (id) => {
                 <select v-model="form.button_url" class="w-full sm:w-1/2 rounded-xl border-nyale-blue/20">
                     <option value="">About Us — "Learn More" (default)</option>
                     <option v-for="opt in buttonOptions" :key="opt.url" :value="opt.url">
-                        {{ opt.label }} — {{ opt.url }}
+                        {{ opt.label }}
                     </option>
                 </select>
                 <p class="text-xs text-nyale-navy/40 mt-1">The button text is set automatically to match the page you pick.</p>
