@@ -10,6 +10,21 @@ class Slider extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Pages the first slide button can point to, as link => button text.
+     * Leaving it unset shows the default "Learn More" button linking to /about.
+     * "Get Involved" is left out because every slide already has that button.
+     */
+    public const BUTTON_OPTIONS = [
+        '/programs' => 'Our Programs',
+        '/our-impact' => 'See Our Impact',
+        '/case-tracker' => 'Track Cases',
+        '/campaigns' => 'View Campaigns',
+        '/events' => 'View Events',
+        '/news' => 'Read the News',
+        '/knowledge-hub' => 'Explore Resources',
+    ];
+
     protected $fillable = [
         'title',
         'eyebrow',

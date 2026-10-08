@@ -8,6 +8,7 @@ use App\Models\Slider;
 use App\Support\RichText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class SliderController extends Controller
@@ -26,22 +27,32 @@ class SliderController extends Controller
                 },
             ],
             'image' => ['nullable', 'image', 'max:4096'],
-            'button_label' => ['nullable', 'string', 'max:60'],
-            'button_url' => ['nullable', 'string', 'max:255'],
+            'button_url' => ['nullable', Rule::in(array_keys(Slider::BUTTON_OPTIONS))],
             'order' => ['nullable', 'integer'],
         ];
+    }
+
+    private function withButtonLabel(array $validated): array
+    {
+        $validated['button_url'] = $validated['button_url'] ?? null;
+        $validated['button_label'] = Slider::BUTTON_OPTIONS[$validated['button_url']] ?? null;
+
+        return $validated;
     }
 
     public function index()
     {
         return Inertia::render('Dashboard/Sliders', [
             'sliders' => Slider::ordered()->get(),
+            'buttonOptions' => collect(Slider::BUTTON_OPTIONS)
+                ->map(fn ($label, $url) => ['url' => $url, 'label' => $label])
+                ->values(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
+        $validated = $this->withButtonLabel($request->validate($this->rules()));
         $validated['description'] = RichText::clean($validated['description'] ?? null);
         $validated['order'] = $validated['order'] ?? 0;
         $validated['created_by'] = auth()->id();
@@ -59,7 +70,7 @@ class SliderController extends Controller
 
     public function update(Request $request, Slider $slider)
     {
-        $validated = $request->validate($this->rules());
+        $validated = $this->withButtonLabel($request->validate($this->rules()));
         $validated['description'] = RichText::clean($validated['description'] ?? null);
         $validated['order'] = $validated['order'] ?? 0;
         $validated['updated_by'] = auth()->id();

@@ -5,8 +5,9 @@ import AppSidebarLayout from '@/Layouts/AppSidebarLayout.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { confirmDelete } from '@/Composables/useConfirm';
 
-defineProps({
+const props = defineProps({
     sliders: { type: Array, default: () => [] },
+    buttonOptions: { type: Array, default: () => [] },
 });
 
 const showForm = ref(false);
@@ -18,7 +19,6 @@ const form = useForm({
     eyebrow: '',
     description: '',
     image: null,
-    button_label: '',
     button_url: '',
     order: 0,
 });
@@ -37,8 +37,8 @@ const openEdit = (slide) => {
     form.eyebrow = slide.eyebrow ?? '';
     form.description = slide.description ?? '';
     form.image = null;
-    form.button_label = slide.button_label ?? '';
-    form.button_url = slide.button_url ?? '';
+    // Older slides may hold a custom link that is no longer offered; they fall back to the default.
+    form.button_url = props.buttonOptions.some((o) => o.url === slide.button_url) ? slide.button_url : '';
     form.order = slide.order;
     showForm.value = true;
 };
@@ -74,7 +74,7 @@ const toggleActive = (id) => {
     <AppSidebarLayout title="Home Page Sliders">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
             <p class="text-sm text-nyale-navy/60 max-w-xl">
-                Only slides created here appear in the home page slider. News, blog and impact stories are never added automatically. Every slide shows "Learn More" and "Get Involved" buttons; the first button can be customised per slide.
+                Only slides created here appear in the home page slider. News, blog and impact stories are never added automatically. Every slide has two buttons: the first goes to About Us ("Learn More") unless you pick another page, and the second is always "Get Involved".
             </p>
             <button @click="showForm ? close() : openCreate()"
                 class="rounded-full bg-nyale-blue px-5 py-2.5 text-sm font-bold text-white hover:bg-nyale-blue-dark">
@@ -101,15 +101,16 @@ const toggleActive = (id) => {
                 <p class="text-xs text-nyale-navy/40 mt-1">Use B and I to make text bold or italic. Keep it under 600 characters.</p>
                 <p v-if="form.errors.description" class="text-xs text-red-600 mt-1">{{ form.errors.description }}</p>
             </div>
-            <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">First button label (default: Learn More)</label>
-                    <input v-model="form.button_label" type="text" maxlength="60" placeholder="Learn More" class="w-full rounded-xl border-nyale-blue/20" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">First button link (default: /about)</label>
-                    <input v-model="form.button_url" type="text" placeholder="/about, /news/my-story or https://…" class="w-full rounded-xl border-nyale-blue/20" />
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Button takes visitors to</label>
+                <select v-model="form.button_url" class="w-full sm:w-1/2 rounded-xl border-nyale-blue/20">
+                    <option value="">About Us — "Learn More" (default)</option>
+                    <option v-for="opt in buttonOptions" :key="opt.url" :value="opt.url">
+                        {{ opt.label }} — {{ opt.url }}
+                    </option>
+                </select>
+                <p class="text-xs text-nyale-navy/40 mt-1">The button text is set automatically to match the page you pick.</p>
+                <p v-if="form.errors.button_url" class="text-xs text-red-600 mt-1">{{ form.errors.button_url }}</p>
             </div>
             <div class="grid sm:grid-cols-2 gap-4">
                 <div>
