@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Slider;
 use App\Support\RichText;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -28,7 +29,6 @@ class SliderController extends Controller
             ],
             'image' => ['nullable', 'image', 'max:4096'],
             'button_url' => ['nullable', Rule::in(array_keys(Slider::BUTTON_OPTIONS))],
-            'order' => ['nullable', 'integer'],
         ];
     }
 
@@ -54,7 +54,8 @@ class SliderController extends Controller
     {
         $validated = $this->withButtonLabel($request->validate($this->rules()));
         $validated['description'] = RichText::clean($validated['description'] ?? null);
-        $validated['order'] = $validated['order'] ?? 0;
+        // New slides go to the end of the list; admins drag them into place.
+        $validated['order'] = (Slider::max('order') ?? -1) + 1;
         $validated['created_by'] = auth()->id();
 
         if ($request->hasFile('image')) {
@@ -72,7 +73,6 @@ class SliderController extends Controller
     {
         $validated = $this->withButtonLabel($request->validate($this->rules()));
         $validated['description'] = RichText::clean($validated['description'] ?? null);
-        $validated['order'] = $validated['order'] ?? 0;
         $validated['updated_by'] = auth()->id();
 
         if ($request->hasFile('image')) {
@@ -89,6 +89,24 @@ class SliderController extends Controller
         ActivityLogger::log('updated', 'sliders', 'Updated slide: ' . $slider->title);
 
         return back()->with('success', 'Slide updated.');
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'distinct', Rule::exists('sliders', 'id')],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['ids'] as $position => $id) {
+                Slider::whereKey($id)->update(['order' => $position]);
+            }
+        });
+
+        ActivityLogger::log('updated', 'sliders', 'Reordered slides');
+
+        return back()->with('success', 'Slide order saved.');
     }
 
     public function toggleActive(Slider $slider)

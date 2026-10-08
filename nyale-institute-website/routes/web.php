@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     // Home page sliders
     Route::get('/sliders', [SliderController::class, 'index'])->name('sliders');
     Route::post('/sliders', [SliderController::class, 'store'])->name('sliders.store');
+    Route::patch('/sliders/reorder', [SliderController::class, 'reorder'])->name('sliders.reorder');
     Route::put('/sliders/{slider}', [SliderController::class, 'update'])->name('sliders.update');
     Route::patch('/sliders/{slider}/toggle-active', [SliderController::class, 'toggleActive'])->name('sliders.toggle-active');
     Route::delete('/sliders/{slider}', [SliderController::class, 'destroy'])->name('sliders.destroy');
