@@ -1,10 +1,10 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
-import Sortable from 'sortablejs';
 import AppSidebarLayout from '@/Layouts/AppSidebarLayout.vue';
 import RichTextEditor from '@/Components/RichTextEditor.vue';
 import { confirmDelete } from '@/Composables/useConfirm';
+import { useSortableRows } from '@/Composables/useSortableRows';
 
 const props = defineProps({
     sliders: { type: Array, default: () => [] },
@@ -23,37 +23,7 @@ const form = useForm({
     button_url: '',
 });
 
-// Local copy of the list so drag-and-drop can reorder it instantly.
-const rows = ref([...props.sliders]);
-watch(() => props.sliders, (value) => { rows.value = [...value]; });
-
-const tbody = ref(null);
-let sortable = null;
-
-onMounted(() => {
-    sortable = Sortable.create(tbody.value, {
-        handle: '.drag-handle',
-        draggable: 'tr[data-id]',
-        animation: 150,
-        ghostClass: 'opacity-40',
-        onEnd: ({ item, from, oldIndex, newIndex, oldDraggableIndex, newDraggableIndex }) => {
-            if (oldIndex === newIndex) return;
-            // Put the row back where it was and let Vue re-render from the reordered array.
-            from.removeChild(item);
-            from.insertBefore(item, from.children[oldIndex] ?? null);
-
-            const [moved] = rows.value.splice(oldDraggableIndex, 1);
-            rows.value.splice(newDraggableIndex, 0, moved);
-
-            router.patch('/dashboard/sliders/reorder', { ids: rows.value.map((s) => s.id) }, {
-                preserveScroll: true,
-                preserveState: true,
-            });
-        },
-    });
-});
-
-onBeforeUnmount(() => sortable?.destroy());
+const { rows, tbody } = useSortableRows(() => props.sliders, '/dashboard/sliders/reorder');
 
 const openCreate = () => {
     editingId.value = null;

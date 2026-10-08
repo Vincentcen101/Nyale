@@ -94,22 +94,53 @@ const toggleActive = (id) => router.patch(`/dashboard/cases/${id}/toggle-active`
             </button>
         </form>
 
-        <div class="space-y-3">
-            <div v-for="c in cases" :key="c.id" class="rounded-2xl border border-nyale-blue/15 p-5 flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <p class="text-xs font-bold uppercase text-nyale-green">{{ statusLabels[c.status] }}<span v-if="c.case_date" class="text-nyale-navy/40"> · {{ c.case_date }}</span></p>
-                    <p class="font-semibold text-nyale-navy line-clamp-2">{{ c.title }}</p>
-                    <p class="text-xs text-nyale-navy/50 mt-1">{{ c.likes_count }} likes</p>
-                </div>
-                <div class="flex-shrink-0 space-x-3 text-xs">
-                    <button @click="toggleActive(c.id)" class="font-semibold" :class="c.is_active ? 'text-nyale-green-dark' : 'text-nyale-navy/40'">
-                        {{ c.is_active ? 'Live' : 'Hidden' }}
-                    </button>
-                    <button @click="openEdit(c)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
-                    <button @click="destroy(c.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
-                </div>
-            </div>
-            <p v-if="!cases.length" class="text-center text-nyale-navy/40 py-8">No cases yet.</p>
+        <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-nyale-blue-light text-nyale-navy/70">
+                    <tr>
+                        <th class="text-left px-5 py-3 font-semibold">Case</th>
+                        <th class="text-left px-5 py-3 font-semibold">Court status</th>
+                        <th class="text-left px-5 py-3 font-semibold">Likes</th>
+                        <th class="text-left px-5 py-3 font-semibold">Status</th>
+                        <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-nyale-blue/10">
+                    <tr v-for="c in cases" :key="c.id">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-3">
+                                <img v-if="c.image" :src="`/storage/${c.image}`" :alt="c.title"
+                                    class="h-12 w-20 rounded-lg object-cover flex-shrink-0" />
+                                <div v-else class="h-12 w-20 rounded-lg bg-nyale-blue-light flex-shrink-0"></div>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-nyale-navy line-clamp-2">{{ c.title }}</p>
+                                    <p v-if="c.case_number" class="text-xs text-nyale-navy/50">{{ c.case_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <p class="text-xs font-bold uppercase text-nyale-green">{{ statusLabels[c.status] }}</p>
+                            <p v-if="c.case_date" class="text-nyale-navy/60">{{ c.case_date }}</p>
+                        </td>
+                        <td class="px-5 py-3 text-nyale-navy/60">{{ c.likes_count }}</td>
+                        <td class="px-5 py-3">
+                            <button @click="toggleActive(c.id)" class="rounded-full px-3 py-1 text-xs font-bold"
+                                :class="c.is_active ? 'bg-nyale-green/15 text-nyale-green-dark' : 'bg-nyale-navy/10 text-nyale-navy/50'">
+                                {{ c.is_active ? 'Live' : 'Hidden' }}
+                            </button>
+                        </td>
+                        <td class="px-5 py-3 text-right space-x-3">
+                            <button @click="openEdit(c)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
+                            <button @click="destroy(c.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                    <tr v-if="!cases.length">
+                        <td colspan="5" class="px-5 py-8 text-center text-nyale-navy/40">
+                            No cases recorded yet — the public Case Tracker stays empty until you add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </AppSidebarLayout>
 </template>

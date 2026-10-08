@@ -75,22 +75,48 @@ const toggleActive = (id) => router.patch(`/dashboard/campaigns/${id}/toggle-act
             <button type="submit" class="rounded-full bg-nyale-blue px-6 py-2.5 text-sm font-bold text-white">{{ editingId ? 'Update' : 'Create' }}</button>
         </form>
 
-        <div class="space-y-3">
-            <div v-for="c in campaigns" :key="c.id" class="rounded-2xl border border-nyale-blue/15 p-5 flex items-start justify-between gap-4">
-                <div>
-                    <p class="text-xs font-bold uppercase" :class="c.status === 'active' ? 'text-nyale-green' : 'text-nyale-navy/40'">{{ c.status }}</p>
-                    <p class="font-semibold text-nyale-navy">{{ c.title }}</p>
-                    <p class="text-sm text-nyale-navy/50 line-clamp-1">{{ c.summary }}</p>
-                </div>
-                <div class="flex-shrink-0 space-x-3 text-xs">
-                    <button @click="toggleActive(c.id)" class="font-semibold" :class="c.is_active ? 'text-nyale-green-dark' : 'text-nyale-navy/40'">
-                        {{ c.is_active ? 'Active' : 'Hidden' }}
-                    </button>
-                    <button @click="openEdit(c)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
-                    <button @click="destroy(c.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
-                </div>
-            </div>
-            <p v-if="!campaigns.length" class="text-center text-nyale-navy/40 py-8">No campaigns yet.</p>
+        <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-nyale-blue-light text-nyale-navy/70">
+                    <tr>
+                        <th class="text-left px-5 py-3 font-semibold">Campaign</th>
+                        <th class="text-left px-5 py-3 font-semibold">Stage</th>
+                        <th class="text-left px-5 py-3 font-semibold">Status</th>
+                        <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-nyale-blue/10">
+                    <tr v-for="c in campaigns" :key="c.id">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-3">
+                                <img v-if="c.banner" :src="`/storage/${c.banner}`" :alt="c.title"
+                                    class="h-12 w-20 rounded-lg object-cover flex-shrink-0" />
+                                <div v-else class="h-12 w-20 rounded-lg bg-nyale-blue-light flex-shrink-0"></div>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-nyale-navy">{{ c.title }}</p>
+                                    <p class="text-xs text-nyale-navy/50 line-clamp-1">{{ c.summary }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3 text-xs font-bold uppercase" :class="c.status === 'active' ? 'text-nyale-green' : 'text-nyale-navy/40'">{{ c.status }}</td>
+                        <td class="px-5 py-3">
+                            <button @click="toggleActive(c.id)" class="rounded-full px-3 py-1 text-xs font-bold"
+                                :class="c.is_active ? 'bg-nyale-green/15 text-nyale-green-dark' : 'bg-nyale-navy/10 text-nyale-navy/50'">
+                                {{ c.is_active ? 'Active' : 'Hidden' }}
+                            </button>
+                        </td>
+                        <td class="px-5 py-3 text-right space-x-3">
+                            <button @click="openEdit(c)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
+                            <button @click="destroy(c.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                    <tr v-if="!campaigns.length">
+                        <td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">
+                            No campaigns yet — the public Campaigns page stays empty until you add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </AppSidebarLayout>
 </template>

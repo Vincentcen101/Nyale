@@ -105,6 +105,7 @@ const activate = async (id) => {
                             </template>
                         </td>
                     </tr>
+                    <tr v-if="!users.length"><td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">No users yet.</td></tr>
                 </tbody>
             </table>
         </div>

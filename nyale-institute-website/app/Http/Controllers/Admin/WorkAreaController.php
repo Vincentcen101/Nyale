@@ -6,8 +6,10 @@ use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\WorkArea;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class WorkAreaController extends Controller
@@ -27,10 +29,11 @@ class WorkAreaController extends Controller
             'summary' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'max:4096'],
-            'order' => ['nullable', 'integer'],
         ]);
 
         $validated['slug'] = Str::slug($validated['title']) . '-' . Str::random(5);
+        // New programs go to the end of the list; admins drag them into place.
+        $validated['order'] = (WorkArea::max('order') ?? -1) + 1;
         $validated['created_by'] = auth()->id();
 
         if ($request->hasFile('image')) {
@@ -52,7 +55,6 @@ class WorkAreaController extends Controller
             'summary' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'max:4096'],
-            'order' => ['nullable', 'integer'],
         ]);
 
         $validated['updated_by'] = auth()->id();
@@ -71,6 +73,24 @@ class WorkAreaController extends Controller
         ActivityLogger::log('updated', 'work_areas', 'Updated program: ' . $workArea->title);
 
         return back()->with('success', 'Program updated.');
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'distinct', Rule::exists('work_areas', 'id')],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['ids'] as $position => $id) {
+                WorkArea::whereKey($id)->update(['order' => $position]);
+            }
+        });
+
+        ActivityLogger::log('updated', 'work_areas', 'Reordered programs');
+
+        return back()->with('success', 'Program order saved.');
     }
 
     public function toggleActive(WorkArea $workArea)

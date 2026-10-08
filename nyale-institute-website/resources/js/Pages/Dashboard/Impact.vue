@@ -91,6 +91,9 @@ const toggleStoryActive = (id) => router.patch(`/dashboard/impact/stories/${id}/
                         <button @click="destroyStat(stat.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
                     </div>
                 </div>
+                <div v-if="!stats.length" class="sm:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-nyale-blue/25 px-5 py-8 text-center text-sm text-nyale-navy/40">
+                    No impact stats yet — the numbers section on the Impact page stays hidden until you add one.
+                </div>
             </div>
         </div>
 
@@ -133,21 +136,45 @@ const toggleStoryActive = (id) => router.patch(`/dashboard/impact/stories/${id}/
                 </div>
                 <button type="submit" class="rounded-full bg-nyale-blue px-6 py-2.5 text-sm font-bold text-white">{{ editingStoryId ? 'Update' : 'Create' }}</button>
             </form>
-            <div class="space-y-3">
-                <div v-for="story in stories" :key="story.id" class="rounded-2xl border border-nyale-blue/15 p-5 flex items-start justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-bold uppercase text-nyale-green">{{ story.category.replace('_', ' ') }}</p>
-                        <p class="font-semibold text-nyale-navy">{{ story.title }}</p>
-                    </div>
-                    <div class="flex-shrink-0 space-x-3 text-xs">
-                        <button @click="toggleStoryActive(story.id)" class="font-semibold" :class="story.is_active ? 'text-nyale-green-dark' : 'text-nyale-navy/40'">
-                            {{ story.is_active ? 'Active' : 'Hidden' }}
-                        </button>
-                        <button @click="openStoryEdit(story)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
-                        <button @click="destroyStory(story.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
-                    </div>
-                </div>
-                <p v-if="!stories.length" class="text-center text-nyale-navy/40 py-8">No stories yet.</p>
+            <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-nyale-blue-light text-nyale-navy/70">
+                        <tr>
+                            <th class="text-left px-5 py-3 font-semibold">Story</th>
+                            <th class="text-left px-5 py-3 font-semibold">Category</th>
+                            <th class="text-left px-5 py-3 font-semibold">Status</th>
+                            <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-nyale-blue/10">
+                        <tr v-for="story in stories" :key="story.id">
+                            <td class="px-5 py-3">
+                                <div class="flex items-center gap-3">
+                                    <img v-if="story.image" :src="`/storage/${story.image}`" :alt="story.title"
+                                        class="h-12 w-20 rounded-lg object-cover flex-shrink-0" />
+                                    <div v-else class="h-12 w-20 rounded-lg bg-nyale-blue-light flex-shrink-0"></div>
+                                    <p class="font-semibold text-nyale-navy">{{ story.title }}</p>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3 text-xs font-bold uppercase text-nyale-green">{{ story.category.replaceAll('_', ' ') }}</td>
+                            <td class="px-5 py-3">
+                                <button @click="toggleStoryActive(story.id)" class="rounded-full px-3 py-1 text-xs font-bold"
+                                    :class="story.is_active ? 'bg-nyale-green/15 text-nyale-green-dark' : 'bg-nyale-navy/10 text-nyale-navy/50'">
+                                    {{ story.is_active ? 'Active' : 'Hidden' }}
+                                </button>
+                            </td>
+                            <td class="px-5 py-3 text-right space-x-3">
+                                <button @click="openStoryEdit(story)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
+                                <button @click="destroyStory(story.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
+                            </td>
+                        </tr>
+                        <tr v-if="!stories.length">
+                            <td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">
+                                No impact stories yet — the stories section on the Impact page stays empty until you add one.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </AppSidebarLayout>

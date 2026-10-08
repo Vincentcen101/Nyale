@@ -4,10 +4,13 @@ import { useForm, router } from '@inertiajs/vue3';
 import AppSidebarLayout from '@/Layouts/AppSidebarLayout.vue';
 import Icon from '@/Components/Icon.vue';
 import { confirmDelete } from '@/Composables/useConfirm';
+import { useSortableRows } from '@/Composables/useSortableRows';
 
 const props = defineProps({
     workAreas: { type: Array, default: () => [] },
 });
+
+const { rows, tbody } = useSortableRows(() => props.workAreas, '/dashboard/work-areas/reorder');
 
 const iconOptions = ['scale', 'document-text', 'chart-bar', 'users', 'academic-cap', 'megaphone', 'calendar', 'heart', 'globe', 'book', 'handshake', 'briefcase'];
 
@@ -20,7 +23,6 @@ const form = useForm({
     summary: '',
     body: '',
     image: null,
-    order: 0,
 });
 
 const openCreate = () => {
@@ -36,7 +38,6 @@ const openEdit = (area) => {
     form.summary = area.summary;
     form.body = area.body;
     form.image = null;
-    form.order = area.order;
     showForm.value = true;
 };
 
@@ -97,32 +98,34 @@ const toggleActive = (id) => {
                 <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Full description</label>
                 <textarea v-model="form.body" rows="4" class="w-full rounded-xl border-nyale-blue/20"></textarea>
             </div>
-            <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Image</label>
-                    <input @input="form.image = $event.target.files[0]" type="file" accept="image/*" class="w-full text-sm" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Order</label>
-                    <input v-model.number="form.order" type="number" class="w-full rounded-xl border-nyale-blue/20" />
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-nyale-navy/70 mb-1">Image</label>
+                <input @input="form.image = $event.target.files[0]" type="file" accept="image/*" class="w-full text-sm" />
             </div>
             <button type="submit" :disabled="form.processing" class="rounded-full bg-nyale-blue px-6 py-2.5 text-sm font-bold text-white disabled:opacity-60">
                 {{ editingId ? 'Update' : 'Create' }}
             </button>
         </form>
 
+        <p v-if="rows.length > 1" class="mb-3 text-xs text-nyale-navy/50">
+            Tip: drag a program by its <span class="font-bold">⠿</span> handle to change the order. Programs appear in this order on the website. Changes save automatically.
+        </p>
         <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
             <table class="w-full text-sm">
                 <thead class="bg-nyale-blue-light text-nyale-navy/70">
                     <tr>
+                        <th class="w-10 px-2 py-3"><span class="sr-only">Reorder</span></th>
                         <th class="text-left px-5 py-3 font-semibold">Program</th>
                         <th class="text-left px-5 py-3 font-semibold">Status</th>
                         <th class="text-right px-5 py-3 font-semibold">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-nyale-blue/10">
-                    <tr v-for="area in workAreas" :key="area.id">
+                <tbody ref="tbody" class="divide-y divide-nyale-blue/10">
+                    <tr v-for="area in rows" :key="area.id" :data-id="area.id" class="bg-white">
+                        <td class="px-2 py-3 text-center">
+                            <span class="drag-handle cursor-grab active:cursor-grabbing select-none touch-none px-2 text-lg leading-none text-nyale-navy/40 hover:text-nyale-blue"
+                                title="Drag to reorder" aria-label="Drag to reorder">⠿</span>
+                        </td>
                         <td class="px-5 py-3">
                             <div class="flex items-center gap-3">
                                 <Icon :name="area.icon" size="h-5 w-5 text-nyale-blue" />
@@ -144,8 +147,8 @@ const toggleActive = (id) => {
                             <button @click="destroy(area.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
                         </td>
                     </tr>
-                    <tr v-if="!workAreas.length">
-                        <td colspan="3" class="px-5 py-8 text-center text-nyale-navy/40">No programs yet.</td>
+                    <tr v-if="!rows.length">
+                        <td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">No programs yet — the Programs page stays empty until you add one.</td>
                     </tr>
                 </tbody>
             </table>

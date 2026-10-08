@@ -67,6 +67,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     // Work Areas
     Route::get('/work-areas', [WorkAreaController::class, 'index'])->name('work-areas');
     Route::post('/work-areas', [WorkAreaController::class, 'store'])->name('work-areas.store');
+    Route::patch('/work-areas/reorder', [WorkAreaController::class, 'reorder'])->name('work-areas.reorder');
     Route::put('/work-areas/{workArea}', [WorkAreaController::class, 'update'])->name('work-areas.update');
     Route::patch('/work-areas/{workArea}/toggle-active', [WorkAreaController::class, 'toggleActive'])->name('work-areas.toggle-active');
     Route::delete('/work-areas/{workArea}', [WorkAreaController::class, 'destroy'])->name('work-areas.destroy');
@@ -127,6 +128,7 @@ Route::middleware(['auth', 'verified'])->prefix('dashboard')->name('dashboard.')
     Route::middleware('admin')->group(function () {
         Route::get('/team', [TeamController::class, 'index'])->name('team');
         Route::post('/team', [TeamController::class, 'store'])->name('team.store');
+        Route::patch('/team/reorder', [TeamController::class, 'reorder'])->name('team.reorder');
         Route::put('/team/{member}', [TeamController::class, 'update'])->name('team.update');
         Route::patch('/team/{member}/toggle-active', [TeamController::class, 'toggleActive'])->name('team.toggle-active');
         Route::delete('/team/{member}', [TeamController::class, 'destroy'])->name('team.destroy');

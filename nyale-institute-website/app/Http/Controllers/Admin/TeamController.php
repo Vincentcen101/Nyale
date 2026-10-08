@@ -6,7 +6,9 @@ use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TeamController extends Controller
@@ -28,9 +30,10 @@ class TeamController extends Controller
             'type' => ['required', 'in:board,staff'],
             'email' => ['nullable', 'email', 'max:255'],
             'linkedin' => ['nullable', 'string', 'max:255'],
-            'order' => ['nullable', 'integer'],
         ]);
 
+        // New members go to the end of the list; admins drag them into place.
+        $validated['order'] = (TeamMember::max('order') ?? -1) + 1;
         $validated['created_by'] = auth()->id();
 
         if ($request->hasFile('photo')) {
@@ -54,7 +57,6 @@ class TeamController extends Controller
             'type' => ['required', 'in:board,staff'],
             'email' => ['nullable', 'email', 'max:255'],
             'linkedin' => ['nullable', 'string', 'max:255'],
-            'order' => ['nullable', 'integer'],
         ]);
 
         $validated['updated_by'] = auth()->id();
@@ -73,6 +75,24 @@ class TeamController extends Controller
         ActivityLogger::log('updated', 'team', 'Updated team member: ' . $member->name);
 
         return back()->with('success', 'Team member updated.');
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'distinct', Rule::exists('team_members', 'id')],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['ids'] as $position => $id) {
+                TeamMember::whereKey($id)->update(['order' => $position]);
+            }
+        });
+
+        ActivityLogger::log('updated', 'team', 'Reordered team members');
+
+        return back()->with('success', 'Team order saved.');
     }
 
     public function toggleActive(TeamMember $member)
