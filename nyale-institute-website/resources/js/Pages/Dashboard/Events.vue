@@ -91,24 +91,53 @@ const isPast = (e) => new Date(e.starts_at) < new Date();
             </button>
         </form>
 
-        <div class="space-y-3">
-            <div v-for="e in events" :key="e.id" class="rounded-2xl border border-nyale-blue/15 p-5 flex items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <p class="text-xs font-bold uppercase" :class="isPast(e) ? 'text-nyale-navy/40' : 'text-nyale-green'">
-                        {{ isPast(e) ? 'Past' : 'Upcoming' }} · {{ e.starts_at?.replace('T', ' ') }}
-                    </p>
-                    <p class="font-semibold text-nyale-navy">{{ e.title }}</p>
-                    <p v-if="e.location" class="text-xs text-nyale-navy/50">{{ e.location }}</p>
-                </div>
-                <div class="flex-shrink-0 space-x-3 text-xs">
-                    <button @click="toggleActive(e.id)" class="font-semibold" :class="e.is_active ? 'text-nyale-green-dark' : 'text-nyale-navy/40'">
-                        {{ e.is_active ? 'Live' : 'Hidden' }}
-                    </button>
-                    <button @click="openEdit(e)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
-                    <button @click="destroy(e.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
-                </div>
-            </div>
-            <p v-if="!events.length" class="text-center text-nyale-navy/40 py-8">No events yet.</p>
+        <div class="rounded-2xl border border-nyale-blue/15 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-nyale-blue-light text-nyale-navy/70">
+                    <tr>
+                        <th class="text-left px-5 py-3 font-semibold">Event</th>
+                        <th class="text-left px-5 py-3 font-semibold">Date</th>
+                        <th class="text-left px-5 py-3 font-semibold">Status</th>
+                        <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-nyale-blue/10">
+                    <tr v-for="e in events" :key="e.id">
+                        <td class="px-5 py-3">
+                            <div class="flex items-center gap-3">
+                                <img v-if="e.image" :src="`/storage/${e.image}`" :alt="e.title"
+                                    class="h-12 w-20 rounded-lg object-cover flex-shrink-0" />
+                                <div v-else class="h-12 w-20 rounded-lg bg-nyale-blue-light flex-shrink-0"></div>
+                                <div>
+                                    <p class="font-semibold text-nyale-navy">{{ e.title }}</p>
+                                    <p v-if="e.location" class="text-xs text-nyale-navy/50">{{ e.location }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <p class="text-xs font-bold uppercase" :class="isPast(e) ? 'text-nyale-navy/40' : 'text-nyale-green'">
+                                {{ isPast(e) ? 'Past' : 'Upcoming' }}
+                            </p>
+                            <p class="text-nyale-navy/60">{{ e.starts_at?.replace('T', ' ') }}</p>
+                        </td>
+                        <td class="px-5 py-3">
+                            <button @click="toggleActive(e.id)" class="rounded-full px-3 py-1 text-xs font-bold"
+                                :class="e.is_active ? 'bg-nyale-green/15 text-nyale-green-dark' : 'bg-nyale-navy/10 text-nyale-navy/50'">
+                                {{ e.is_active ? 'Live' : 'Hidden' }}
+                            </button>
+                        </td>
+                        <td class="px-5 py-3 text-right space-x-3">
+                            <button @click="openEdit(e)" class="font-semibold text-nyale-blue hover:underline">Edit</button>
+                            <button @click="destroy(e.id)" class="font-semibold text-red-600 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                    <tr v-if="!events.length">
+                        <td colspan="4" class="px-5 py-8 text-center text-nyale-navy/40">
+                            No events yet — the public Events page stays empty until you add one.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </AppSidebarLayout>
 </template>
